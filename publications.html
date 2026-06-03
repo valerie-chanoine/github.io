@@ -4,14 +4,30 @@
 <meta charset="UTF-8">
 <title>Publications</title>
 <link rel="stylesheet" href="assets/style.css">
+
+<style>
+.pub-item {
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.pub-title {
+    font-weight: bold;
+}
+
+.pub-meta {
+    font-size: 0.9em;
+    color: #444;
+}
+</style>
+
 </head>
 
 <body>
 
 <header>
-
     <img src="photo.jpg" class="profile-photo" alt="Valérie Chanoine">
-
     <h1>Valérie Chanoine, PhD</h1>
 
     <p class="subtitle">
@@ -19,38 +35,90 @@
     </p>
 
     <p class="subtitle">
-        Cognitive Neuroscience • Multimodal Neuroimaging • MEG • EEG • fMRI • SEEG
+        Cognitive Neuroscience • MEG • EEG • fMRI • SEEG
     </p>
-
 </header>
 
 <nav class="navbar">
-    <a href="index.html" class="active">Home</a>
-    <a href="publications.html">Publications</a>
+    <a href="index.html">Home</a>
+    <a href="publications.html" class="active">Publications</a>
     <a href="cv.html">CV</a>
 </nav>
 
 <div class="container">
 
 <div class="card">
-<h2>Selected work</h2>
-<ul>
-<li><b>Science</b> — neuroimaging cognition (postdoctoral research)</li>
-<li>Multimodal MEG/EEG/fMRI studies</li>
-<li>Computational neuroscience & signal processing</li>
-</ul>
-</div>
+<h2>Publications (auto ORCID)</h2>
 
-<div class="card">
-<h2>ORCID</h2>
-<p>
-<a href="https://orcid.org/XXXX-XXXX-XXXX-XXXX">
-Full publication list
-</a>
-</p>
+<div id="publications">
+    Loading publications from ORCID...
 </div>
 
 </div>
+
+</div>
+
+<script>
+const ORCID_ID = "0000-0002-3492-8160";
+
+async function loadPublications() {
+    const url = `https://pub.orcid.org/v3.0/${ORCID_ID}/works`;
+
+    const response = await fetch(url, {
+        headers: {
+            "Accept": "application/json"
+        }
+    });
+
+    const data = await response.json();
+
+    const container = document.getElementById("publications");
+    container.innerHTML = "";
+
+    const works = data.group || [];
+
+    works.forEach(work => {
+
+        const summary = work["work-summary"]?.[0];
+
+        const title = summary?.title?.title?.value || "Untitled";
+        const year = summary?.["publication-date"]?.year?.value || "n.d.";
+        const type = summary?.type || "";
+        const doi = summary?.["external-ids"]?.["external-id"] || [];
+
+        let doiLink = "";
+
+        doi.forEach(id => {
+            if (id["external-id-type"] === "doi") {
+                doiLink = `https://doi.org/${id["external-id-value"]}`;
+            }
+        });
+
+        const div = document.createElement("div");
+        div.className = "pub-item";
+
+        div.innerHTML = `
+            <div class="pub-title">${title}</div>
+            <div class="pub-meta">
+                ${year} • ${type}
+                ${doiLink ? `• <a href="${doiLink}" target="_blank">DOI</a>` : ""}
+            </div>
+        `;
+
+        container.appendChild(div);
+    });
+
+    if (works.length === 0) {
+        container.innerHTML = "No publications found.";
+    }
+}
+
+loadPublications().catch(err => {
+    document.getElementById("publications").innerHTML =
+        "Error loading ORCID data.";
+    console.error(err);
+});
+</script>
 
 </body>
 </html>
