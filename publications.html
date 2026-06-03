@@ -46,7 +46,7 @@
 <script>
 const ORCID_ID = "0000-0002-3492-8160"; 
 
-async function loadPublicationsAPA() {
+async function loadPublications() {
   const orcidUrl = `https://pub.orcid.org/v3.0/${ORCID_ID}/works`;
 
   const res = await fetch(orcidUrl, {
@@ -61,50 +61,30 @@ async function loadPublicationsAPA() {
   let pubs = [];
 
   for (const work of data.group || []) {
-    const summary = work["work-summary"]?.[0];
+    const title = work["work-summary"]?.[0]?.title?.title?.value;
 
-    const doi = summary?.["external-ids"]?.["external-id"]
-      ?.find(e => e["external-id-type"] === "doi")
-      ?.["external-id-value"];
-
-    if (!doi) continue;
+    if (!title) continue;
 
     try {
-      const meta = await fetchCrossref(doi);
-      const apa = formatAPA7(meta);
+      const paper = await fetchPaper(title);
+      if (!paper) continue;
 
       pubs.push({
-        year: meta.published?.["date-parts"]?.[0]?.[0] || 0,
-        text: apa
+        year: paper.year || 0,
+        text: formatAPA7(paper)
       });
 
     } catch (e) {
-      console.log("DOI failed:", doi);
+      console.log("skip:", title);
     }
   }
 
   pubs.sort((a, b) => b.year - a.year);
 
-  let currentYear = null;
-
-  pubs.forEach(p => {
-    if (p.year !== currentYear) {
-      currentYear = p.year;
-
-      const h = document.createElement("h3");
-      h.textContent = currentYear;
-      container.appendChild(h);
-    }
-
-    const div = document.createElement("div");
-    div.className = "pub";
-    div.textContent = p.text;
-
-    container.appendChild(div);
-  });
+  container.innerHTML = pubs
+    .map(p => `<div class="pub">${p.text}</div>`)
+    .join("");
 }
-
-loadPublicationsAPA();
 </script>
 
 
