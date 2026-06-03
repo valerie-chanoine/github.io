@@ -11,8 +11,13 @@
     padding-bottom: 10px;
     border-bottom: 1px solid #ddd;
 }
-.title { font-weight: bold; }
-.meta { font-size: 0.9em; color: #555; }
+.title {
+    font-weight: bold;
+}
+.meta {
+    font-size: 0.9em;
+    color: #555;
+}
 </style>
 
 </head>
@@ -23,10 +28,16 @@
     <h1>Publications</h1>
 </header>
 
+<nav class="navbar">
+    <a href="index.html">Home</a>
+    <a href="publications.html" class="active">Publications</a>
+    <a href="cv.html">CV</a>
+</nav>
+
 <div class="container">
 <div class="card">
 
-<h2>HAL publications (test étape 1)</h2>
+<h2>HAL publications</h2>
 
 <div id="pubs">Loading...</div>
 
@@ -38,38 +49,48 @@
 const HAL_URL =
 "https://api.archives-ouvertes.fr/search/?q=authIdHal_s:valerie-chanoine&wt=json&rows=50";
 
-async function load() {
+async function loadPublications() {
 
     const container = document.getElementById("pubs");
-    container.innerHTML = "";
 
-    const res = await fetch(HAL_URL);
-    const data = await res.json();
+    try {
+        const res = await fetch(HAL_URL);
+        const data = await res.json();
 
-    const docs = data.response?.docs || [];
+        const docs = data.response?.docs;
 
-    if (docs.length === 0) {
-        container.innerHTML = "Aucune publication HAL trouvée";
-        return;
+        console.log("HAL data:", data); // DEBUG important
+
+        if (!docs || docs.length === 0) {
+            container.innerHTML = "Aucune publication trouvée";
+            return;
+        }
+
+        container.innerHTML = "";
+
+        docs.forEach(doc => {
+
+            const title = doc.title_s?.[0] || "Untitled";
+            const year = doc.publicationDateY_i || doc.producedDateY_i || "";
+
+            const div = document.createElement("div");
+            div.className = "pub";
+
+            div.innerHTML = `
+                <div class="title">${title}</div>
+                <div class="meta">${year} • HAL</div>
+            `;
+
+            container.appendChild(div);
+        });
+
+    } catch (err) {
+        console.error(err);
+        container.innerHTML = "Erreur chargement HAL (voir console)";
     }
-
-    docs.forEach(d => {
-
-        const div = document.createElement("div");
-        div.className = "pub";
-
-        div.innerHTML = `
-            <div class="title">${d.title_s?.[0] || "Untitled"}</div>
-            <div class="meta">
-                ${d.publicationDateY_i || "n.d."} • HAL
-            </div>
-        `;
-
-        container.appendChild(div);
-    });
 }
 
-load();
+loadPublications();
 
 </script>
 
