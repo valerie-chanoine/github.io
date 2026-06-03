@@ -182,8 +182,8 @@ a{ color:var(--primary); font-weight:500; text-decoration:none; }
 
 /* icône */
 .bd-icon {
-  width: 5px;
-  height: 5px;
+  width: 2px;
+  height: 2px;
   vertical-align: middle;
 }
 
