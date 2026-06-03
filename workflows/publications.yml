@@ -1,7 +1,9 @@
-name: Test Publications Workflow
+name: Build ORCID + HAL publications
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
 
 jobs:
   build:
@@ -11,14 +13,17 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Create test JSON
+      - name: Generate publications.json
         run: |
-          echo '{ "status": "OK", "message": "Workflow fonctionne" }' > publications.json
+          echo '{
+            "test": "OK",
+            "source": "GitHub Actions"
+          }' > publications.json
 
-      - name: Commit file
+      - name: Commit file into repo
         run: |
           git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git config user.email "actions@github.com"
           git add publications.json
-          git commit -m "add publications.json" || exit 0
+          git commit -m "update publications.json" || exit 0
           git push
