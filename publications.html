@@ -44,61 +44,43 @@
 </div>
 
 <script>
-
-const HAL_URL =
-"https://api.archives-ouvertes.fr/search/?q=authIdHal_s:valerie-chanoine&wt=json&rows=50";
+const ORCID_ID "0000-0002-3492-8160"; 
 
 async function loadPublications() {
+  const url = `https://pub.orcid.org/v3.0/${ORCID_ID}/works`;
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "Accept": "application/json"
+      }
+    });
+
+    const data = await res.json();
 
     const container = document.getElementById("pubs");
+    container.innerHTML = "";
 
-    try {
-        const res = await fetch(HAL_URL);
-        const data = await res.json();
+    const works = data.group || [];
 
-        const docs = data.response?.docs || [];
+    works.forEach(w => {
+      const title = w["work-summary"]?.[0]?.title?.title?.value || "Sans titre";
 
-        console.log("HAL docs:", docs); // debug utile
+      const div = document.createElement("div");
+      div.className = "pub";
+      div.innerHTML = `<div class="title">${title}</div>`;
 
-        if (docs.length === 0) {
-            container.innerHTML = "Aucune publication trouvée";
-            return;
-        }
+      container.appendChild(div);
+    });
 
-        container.innerHTML = "";
-
-        docs.forEach(doc => {
-
-            // 🔧 sécurisation des champs (HAL est parfois irrégulier)
-            const title =
-                doc.title_s?.[0] ||
-                doc.title_t?.[0] ||
-                "Untitled";
-
-            const year =
-                doc.publicationDateY_i ||
-                doc.producedDateY_i ||
-                "";
-
-            const div = document.createElement("div");
-            div.className = "pub";
-
-            div.innerHTML = `
-                <div class="title">${title}</div>
-                <div class="meta">${year} • HAL</div>
-            `;
-
-            container.appendChild(div);
-        });
-
-    } catch (err) {
-        console.error("HAL error:", err);
-        container.innerHTML = "Erreur chargement HAL (voir console)";
-    }
+  } catch (err) {
+    document.getElementById("pubs").innerHTML =
+      "Erreur de chargement des publications";
+    console.error(err);
+  }
 }
 
 loadPublications();
-
 </script>
 
 </body>
