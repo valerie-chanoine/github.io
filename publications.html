@@ -7,13 +7,12 @@
 
 <style>
 .pub {
-    margin-bottom: 18px;
+    margin-bottom: 15px;
     padding-bottom: 10px;
     border-bottom: 1px solid #ddd;
 }
 .title { font-weight: bold; }
 .meta { font-size: 0.9em; color: #555; }
-.source { font-size: 0.8em; color: #888; }
 </style>
 
 </head>
@@ -21,20 +20,13 @@
 <body>
 
 <header>
-    <img src="photo.jpg" class="profile-photo">
-    <h1>Valérie Chanoine, PhD</h1>
+    <h1>Publications</h1>
 </header>
-
-<nav class="navbar">
-    <a href="index.html">Home</a>
-    <a href="publications.html" class="active">Publications</a>
-    <a href="cv.html">CV</a>
-</nav>
 
 <div class="container">
 <div class="card">
 
-<h2>Publications (HAL + ORCID)</h2>
+<h2>HAL publications (test étape 1)</h2>
 
 <div id="pubs">Loading...</div>
 
@@ -43,77 +35,41 @@
 
 <script>
 
-const ORCID_ID = "0000-0002-3492-8160";
-
-// HAL endpoint (très stable)
 const HAL_URL =
-"https://api.archives-ouvertes.fr/search/?q=authIdHal_s:valerie-chanoine&wt=json&rows=100";
+"https://api.archives-ouvertes.fr/search/?q=authIdHal_s:valerie-chanoine&wt=json&rows=50";
 
-async function loadPublications() {
+async function load() {
 
     const container = document.getElementById("pubs");
     container.innerHTML = "";
 
-    /* ---------------- HAL ---------------- */
-    try {
-        const halRes = await fetch(HAL_URL);
-        const halData = await halRes.json();
+    const res = await fetch(HAL_URL);
+    const data = await res.json();
 
-        const docs = halData.response.docs || [];
+    const docs = data.response?.docs || [];
 
-        docs.forEach(d => {
-            const div = document.createElement("div");
-            div.className = "pub";
-
-            div.innerHTML = `
-                <div class="title">${d.title_s?.[0] || "Untitled"}</div>
-                <div class="meta">
-                    ${d.publicationDateY_i || ""} • HAL
-                </div>
-                <div class="source">HAL</div>
-            `;
-
-            container.appendChild(div);
-        });
-
-    } catch (e) {
-        console.log("HAL error", e);
+    if (docs.length === 0) {
+        container.innerHTML = "Aucune publication HAL trouvée";
+        return;
     }
 
-    /* ---------------- ORCID (optionnel fallback simple) ---------------- */
-    try {
-        const orcidRes = await fetch(
-            `https://pub.orcid.org/v3.0/${ORCID_ID}/works`,
-            { headers: { "Accept": "application/json" } }
-        );
+    docs.forEach(d => {
 
-        const orcidData = await orcidRes.json();
-        const works = orcidData.group || [];
+        const div = document.createElement("div");
+        div.className = "pub";
 
-        works.forEach(w => {
-            const s = w["work-summary"]?.[0];
-            const title = s?.title?.title?.value || "Untitled";
-            const year = s?.["publication-date"]?.year?.value || "";
+        div.innerHTML = `
+            <div class="title">${d.title_s?.[0] || "Untitled"}</div>
+            <div class="meta">
+                ${d.publicationDateY_i || "n.d."} • HAL
+            </div>
+        `;
 
-            const div = document.createElement("div");
-            div.className = "pub";
-
-            div.innerHTML = `
-                <div class="title">${title}</div>
-                <div class="meta">${year} • ORCID</div>
-                <div class="source">ORCID</div>
-            `;
-
-            container.appendChild(div);
-        });
-
-    } catch (e) {
-        console.log("ORCID error (normal parfois)", e);
-    }
-
+        container.appendChild(div);
+    });
 }
 
-loadPublications();
+load();
 
 </script>
 
