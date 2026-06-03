@@ -46,79 +46,65 @@
 <script>
 const ORCID_ID = "0000-0002-3492-8160"; 
 
-function formatAPA(work) {
-  const summary = work["work-summary"]?.[0];
+async function loadPublicationsAPA() {
+  const orcidUrl = `https://pub.orcid.org/v3.0/${ORCID_ID}/works`;
 
-  const title = summary?.title?.title?.value || "Sans titre";
+  const res = await fetch(orcidUrl, {
+    headers: { Accept: "application/json" }
+  });
 
-  // Auteurs (souvent incomplet dans ORCID)
-  const authors = summary?.["contributor"]?.map(c => {
-    const name = c?.["credit-name"]?.value;
-    return name ? name : null;
-  }).filter(Boolean);
+  const data = await res.json();
 
-  const authorStr = authors?.length
-    ? authors.join(", ")
-    : "Auteur inconnu";
+  const container = document.getElementById("pubs");
+  container.innerHTML = "";
 
-  const year = summary?.["publication-date"]?.year?.value || "n.d.";
+  let pubs = [];
 
-  const journal = summary?.["journal-title"]?.value || "";
+  for (const work of data.group || []) {
+    const summary = work["work-summary"]?.[0];
 
-  // APA simplifié
-  return {
-    year: parseInt(year) || 0,
-    text: `${authorStr} (${year}). ${title}. ${journal}.`
-  };
-}
+    const doi = summary?.["external-ids"]?.["external-id"]
+      ?.find(e => e["external-id-type"] === "doi")
+      ?.["external-id-value"];
 
-async function loadPublications() {
-  const url = `https://pub.orcid.org/v3.0/${ORCID_ID}/works`;
+    if (!doi) continue;
 
-  try {
-    const res = await fetch(url, {
-      headers: { "Accept": "application/json" }
-    });
+    try {
+      const meta = await fetchCrossref(doi);
+      const apa = formatAPA7(meta);
 
-    const data = await res.json();
+      pubs.push({
+        year: meta.published?.["date-parts"]?.[0]?.[0] || 0,
+        text: apa
+      });
 
-    let publications = (data.group || []).map(formatAPA);
-
-    // tri par année décroissante
-    publications.sort((a, b) => b.year - a.year);
-
-    // regroupement HTML par année
-    const container = document.getElementById("pubs");
-    container.innerHTML = "";
-
-    let currentYear = null;
-
-    publications.forEach(pub => {
-      const year = pub.year || "n.d.";
-
-      if (year !== currentYear) {
-        currentYear = year;
-
-        const h = document.createElement("h3");
-        h.textContent = year;
-        container.appendChild(h);
-      }
-
-      const div = document.createElement("div");
-      div.className = "pub";
-      div.textContent = pub.text;
-
-      container.appendChild(div);
-    });
-
-  } catch (err) {
-    console.error(err);
-    document.getElementById("pubs").innerHTML =
-      "Erreur de chargement des publications";
+    } catch (e) {
+      console.log("DOI failed:", doi);
+    }
   }
+
+  pubs.sort((a, b) => b.year - a.year);
+
+  let currentYear = null;
+
+  pubs.forEach(p => {
+    if (p.year !== currentYear) {
+      currentYear = p.year;
+
+      const h = document.createElement("h3");
+      h.textContent = currentYear;
+      container.appendChild(h);
+    }
+
+    const div = document.createElement("div");
+    div.className = "pub";
+    div.textContent = p.text;
+
+    container.appendChild(div);
+  });
 }
 
-loadPublications();
+loadPublicationsAPA();
 </script>
 
 
