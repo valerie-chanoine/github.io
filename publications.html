@@ -56,11 +56,11 @@ async function loadPublications() {
         const res = await fetch(HAL_URL);
         const data = await res.json();
 
-        const docs = data.response?.docs;
+        const docs = data.response?.docs || [];
 
-        console.log("HAL data:", data); // DEBUG important
+        console.log("HAL docs:", docs); // debug utile
 
-        if (!docs || docs.length === 0) {
+        if (docs.length === 0) {
             container.innerHTML = "Aucune publication trouvée";
             return;
         }
@@ -69,8 +69,16 @@ async function loadPublications() {
 
         docs.forEach(doc => {
 
-            const title = doc.title_s?.[0] || "Untitled";
-            const year = doc.publicationDateY_i || doc.producedDateY_i || "";
+            // 🔧 sécurisation des champs (HAL est parfois irrégulier)
+            const title =
+                doc.title_s?.[0] ||
+                doc.title_t?.[0] ||
+                "Untitled";
+
+            const year =
+                doc.publicationDateY_i ||
+                doc.producedDateY_i ||
+                "";
 
             const div = document.createElement("div");
             div.className = "pub";
@@ -84,7 +92,7 @@ async function loadPublications() {
         });
 
     } catch (err) {
-        console.error(err);
+        console.error("HAL error:", err);
         container.innerHTML = "Erreur chargement HAL (voir console)";
     }
 }
