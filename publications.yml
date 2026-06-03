@@ -1,0 +1,56 @@
+name: Update Publications (ORCID + HAL)
+
+on:
+  schedule:
+    - cron: "0 3 * * *"  # chaque jour à 3h
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Fetch ORCID + HAL
+        run: |
+          mkdir -p data
+
+          curl -H "Accept: application/json" \
+          "https://pub.orcid.org/v3.0/0000-0002-3492-8160/works" \
+          > orcid.json
+
+          curl -s "https://api.archives-ouvertes.fr/search/?q=authIdHal_s:valerie-chanoine&wt=json&rows=200" \
+          > hal.json
+
+      - name: Build unified JSON
+        run: |
+          python3 << 'EOF'
+import json
+
+# ORCID
+with open("orcid.json") as f:
+    orcid = json.load(f)
+
+# HAL
+with open("hal.json") as f:
+    hal = json.load(f)
+
+output = {
+    "orcid": orcid,
+    "hal": hal
+}
+
+with open("publications.json", "w") as f:
+    json.dump(output, f, indent=2)
+
+EOF
+
+      - name: Commit result
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add publications.json
+          git commit -m "Update publications" || exit 0
+          git push
