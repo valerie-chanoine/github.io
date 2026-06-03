@@ -45,43 +45,83 @@
 
 <script>
 const ORCID_ID = "0000-0002-3492-8160"; 
+const ORCID_ID = "0000-0000-0000-0000";
+
+function formatAPA(work) {
+  const summary = work["work-summary"]?.[0];
+
+  const title = summary?.title?.title?.value || "Sans titre";
+
+  // Auteurs (souvent incomplet dans ORCID)
+  const authors = summary?.["contributor"]?.map(c => {
+    const name = c?.["credit-name"]?.value;
+    return name ? name : null;
+  }).filter(Boolean);
+
+  const authorStr = authors?.length
+    ? authors.join(", ")
+    : "Auteur inconnu";
+
+  const year = summary?.["publication-date"]?.year?.value || "n.d.";
+
+  const journal = summary?.["journal-title"]?.value || "";
+
+  // APA simplifié
+  return {
+    year: parseInt(year) || 0,
+    text: `${authorStr} (${year}). ${title}. ${journal}.`
+  };
+}
 
 async function loadPublications() {
   const url = `https://pub.orcid.org/v3.0/${ORCID_ID}/works`;
 
   try {
     const res = await fetch(url, {
-      headers: {
-        "Accept": "application/json"
-      }
+      headers: { "Accept": "application/json" }
     });
 
     const data = await res.json();
 
+    let publications = (data.group || []).map(formatAPA);
+
+    // tri par année décroissante
+    publications.sort((a, b) => b.year - a.year);
+
+    // regroupement HTML par année
     const container = document.getElementById("pubs");
     container.innerHTML = "";
 
-    const works = data.group || [];
+    let currentYear = null;
 
-    works.forEach(w => {
-      const title = w["work-summary"]?.[0]?.title?.title?.value || "Sans titre";
+    publications.forEach(pub => {
+      const year = pub.year || "n.d.";
+
+      if (year !== currentYear) {
+        currentYear = year;
+
+        const h = document.createElement("h3");
+        h.textContent = year;
+        container.appendChild(h);
+      }
 
       const div = document.createElement("div");
       div.className = "pub";
-      div.innerHTML = `<div class="title">${title}</div>`;
+      div.textContent = pub.text;
 
       container.appendChild(div);
     });
 
   } catch (err) {
+    console.error(err);
     document.getElementById("pubs").innerHTML =
       "Erreur de chargement des publications";
-    console.error(err);
   }
 }
 
 loadPublications();
 </script>
+
 
 </body>
 </html>
