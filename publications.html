@@ -46,45 +46,79 @@
 <script>
 const ORCID_ID = "0000-0002-3492-8160"; 
 
-async function loadPublications() {
-  const orcidUrl = `https://pub.orcid.org/v3.0/${ORCID_ID}/works`;
+function formatAPA(work) {
+  const summary = work["work-summary"]?.[0];
 
-  const res = await fetch(orcidUrl, {
-    headers: { Accept: "application/json" }
-  });
+  const title = summary?.title?.title?.value || "Sans titre";
 
-  const data = await res.json();
+  // Auteurs (souvent incomplet dans ORCID)
+  const authors = summary?.["contributor"]?.map(c => {
+    const name = c?.["credit-name"]?.value;
+    return name ? name : null;
+  }).filter(Boolean);
 
-  const container = document.getElementById("pubs");
-  container.innerHTML = "";
+  const authorStr = authors?.length
+    ? authors.join(", ")
+    : "Auteur inconnu";
 
-  let pubs = [];
+  const year = summary?.["publication-date"]?.year?.value || "n.d.";
 
-  for (const work of data.group || []) {
-    const title = work["work-summary"]?.[0]?.title?.title?.value;
+  const journal = summary?.["journal-title"]?.value || "";
 
-    if (!title) continue;
-
-    try {
-      const paper = await fetchPaper(title);
-      if (!paper) continue;
-
-      pubs.push({
-        year: paper.year || 0,
-        text: formatAPA7(paper)
-      });
-
-    } catch (e) {
-      console.log("skip:", title);
-    }
-  }
-
-  pubs.sort((a, b) => b.year - a.year);
-
-  container.innerHTML = pubs
-    .map(p => `<div class="pub">${p.text}</div>`)
-    .join("");
+  // APA simplifié
+  return {
+    year: parseInt(year) || 0,
+    text: `${authorStr} (${year}). ${title}. ${journal}.`
+  };
 }
+
+async function loadPublications() {
+  const url = `https://pub.orcid.org/v3.0/${ORCID_ID}/works`;
+
+  try {
+    const res = await fetch(url, {
+      headers: { "Accept": "application/json" }
+    });
+
+    const data = await res.json();
+
+    let publications = (data.group || []).map(formatAPA);
+
+    // tri par année décroissante
+    publications.sort((a, b) => b.year - a.year);
+
+    // regroupement HTML par année
+    const container = document.getElementById("pubs");
+    container.innerHTML = "";
+
+    let currentYear = null;
+
+    publications.forEach(pub => {
+      const year = pub.year || "n.d.";
+
+      if (year !== currentYear) {
+        currentYear = year;
+
+        const h = document.createElement("h3");
+        h.textContent = year;
+        container.appendChild(h);
+      }
+
+      const div = document.createElement("div");
+      div.className = "pub";
+      div.textContent = pub.text;
+
+      container.appendChild(div);
+    });
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById("pubs").innerHTML =
+      "Erreur de chargement des publications";
+  }
+}
+
+loadPublications();
 </script>
 
 
