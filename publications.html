@@ -38,88 +38,19 @@
 
 <h2>ORCID publications</h2>
 
-<div id="pubs">Loading...</div>
+<div id="raw-publications">
+  <!-- COLLE ICI TON CONTENU HYPOTHESES -->
+Inbar, T.C., Badier, JM., Bénar, C., Kanzari, K., Besson, M., & Chanoine, V. 
+Pre-attentive Pitch Processing of Harmonic Complex Sounds at Sensor and Source Levels: Comparing Simultaneously Recorded EEG and MEG Data. (2025). 
+Brain Topography, 38(6). https://doi.org/10.1007/s10548-025-01147-6
+    
+</div>
+
+<div id="pubs"></div>
 
 </div>
 </div>
 
-<script>
-const ORCID_ID = "0000-0002-3492-8160"; 
-
-function formatAPA(work) {
-  const summary = work["work-summary"]?.[0];
-
-  const title = summary?.title?.title?.value || "Sans titre";
-
-  // Auteurs (souvent incomplet dans ORCID)
-  const authors = summary?.["contributor"]?.map(c => {
-    const name = c?.["credit-name"]?.value;
-    return name ? name : null;
-  }).filter(Boolean);
-
-  const authorStr = authors?.length
-    ? authors.join(", ")
-    : "Auteur inconnu";
-
-  const year = summary?.["publication-date"]?.year?.value || "n.d.";
-
-  const journal = summary?.["journal-title"]?.value || "";
-
-  // APA simplifié
-  return {
-    year: parseInt(year) || 0,
-    text: `${authorStr} (${year}). ${title}. ${journal}.`
-  };
-}
-
-async function loadPublications() {
-  const url = `https://pub.orcid.org/v3.0/${ORCID_ID}/works`;
-
-  try {
-    const res = await fetch(url, {
-      headers: { "Accept": "application/json" }
-    });
-
-    const data = await res.json();
-
-    let publications = (data.group || []).map(formatAPA);
-
-    // tri par année décroissante
-    publications.sort((a, b) => b.year - a.year);
-
-    // regroupement HTML par année
-    const container = document.getElementById("pubs");
-    container.innerHTML = "";
-
-    let currentYear = null;
-
-    publications.forEach(pub => {
-      const year = pub.year || "n.d.";
-
-      if (year !== currentYear) {
-        currentYear = year;
-
-        const h = document.createElement("h3");
-        h.textContent = year;
-        container.appendChild(h);
-      }
-
-      const div = document.createElement("div");
-      div.className = "pub";
-      div.textContent = pub.text;
-
-      container.appendChild(div);
-    });
-
-  } catch (err) {
-    console.error(err);
-    document.getElementById("pubs").innerHTML =
-      "Erreur de chargement des publications";
-  }
-}
-
-loadPublications();
-</script>
 
 
 </body>
