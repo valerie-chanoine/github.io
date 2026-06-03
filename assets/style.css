@@ -119,3 +119,17 @@ a{ color:var(--primary); font-weight:500; text-decoration:none; }
 
     margin-bottom:20px;
 }
+.pub-item {
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.pub-title {
+    font-weight: bold;
+}
+
+.pub-meta {
+    font-size: 0.9em;
+    color: #444;
+}
