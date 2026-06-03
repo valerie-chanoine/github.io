@@ -2,24 +2,30 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Publications</title>     
+<title>Publications</title>
 <link rel="stylesheet" href="assets/style.css">
+
+<style>
+.pub {
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+.title { font-weight: bold; }
+.meta { font-size: 0.9em; color: #555; }
+.source {
+    font-size: 0.8em;
+    color: #888;
+}
+</style>
 
 </head>
 
 <body>
 
 <header>
-    <img src="photo.jpg" class="profile-photo" alt="Valérie Chanoine">
+    <img src="photo.jpg" class="profile-photo">
     <h1>Valérie Chanoine, PhD</h1>
-
-    <p class="subtitle">
-        Senior Research Engineer
-    </p>
-
-    <p class="subtitle">
-        Cognitive Neuroscience • MEG • EEG • fMRI • SEEG
-    </p>
 </header>
 
 <nav class="navbar">
@@ -29,78 +35,63 @@
 </nav>
 
 <div class="container">
-
 <div class="card">
-<h2>Publications (auto ORCID)</h2>
 
-<div id="publications">
-    Loading publications from ORCID...
+<h2>Publications</h2>
+
+<div id="pubs">Loading publications...</div>
+
 </div>
-
-</div>
-
 </div>
 
 <script>
-const ORCID_ID = "0000-0002-3492-8160";
+async function load() {
 
-async function loadPublications() {
-    const url = `https://pub.orcid.org/v3.0/${ORCID_ID}/works`;
+    const res = await fetch("publications.json");
+    const data = await res.json();
 
-    const response = await fetch(url, {
-        headers: {
-            "Accept": "application/json"
-        }
-    });
-
-    const data = await response.json();
-
-    const container = document.getElementById("publications");
+    const container = document.getElementById("pubs");
     container.innerHTML = "";
 
-    const works = data.group || [];
+    const orcidWorks = data.orcid.group || [];
 
-    works.forEach(work => {
+    orcidWorks.forEach(w => {
 
-        const summary = work["work-summary"]?.[0];
+        const s = w["work-summary"]?.[0];
+        const title = s?.title?.title?.value || "Untitled";
+        const year = s?.["publication-date"]?.year?.value || "";
+        const type = s?.type || "";
 
-        const title = summary?.title?.title?.value || "Untitled";
-        const year = summary?.["publication-date"]?.year?.value || "n.d.";
-        const type = summary?.type || "";
-        const doi = summary?.["external-ids"]?.["external-id"] || [];
-
-        let doiLink = "";
-
-        doi.forEach(id => {
-            if (id["external-id-type"] === "doi") {
-                doiLink = `https://doi.org/${id["external-id-value"]}`;
-            }
-        });
-
-        const div = document.createElement("div");
-        div.className = "pub-item";
+        let div = document.createElement("div");
+        div.className = "pub";
 
         div.innerHTML = `
-            <div class="pub-title">${title}</div>
-            <div class="pub-meta">
-                ${year} • ${type}
-                ${doiLink ? `• <a href="${doiLink}" target="_blank">DOI</a>` : ""}
-            </div>
+            <div class="title">${title}</div>
+            <div class="meta">${year} • ${type}</div>
+            <div class="source">ORCID</div>
         `;
 
         container.appendChild(div);
     });
 
-    if (works.length === 0) {
-        container.innerHTML = "No publications found.";
-    }
+    const halDocs = data.hal?.response?.docs || [];
+
+    halDocs.forEach(d => {
+
+        let div = document.createElement("div");
+        div.className = "pub";
+
+        div.innerHTML = `
+            <div class="title">${d.title_s?.[0] || "Untitled"}</div>
+            <div class="meta">${d.docType_s || ""} • HAL</div>
+            <div class="source">HAL</div>
+        `;
+
+        container.appendChild(div);
+    });
 }
 
-loadPublications().catch(err => {
-    document.getElementById("publications").innerHTML =
-        "Error loading ORCID data.";
-    console.error(err);
-});
+load();
 </script>
 
 </body>
