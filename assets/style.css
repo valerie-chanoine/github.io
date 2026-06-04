@@ -151,6 +151,13 @@ a{ color:var(--primary); font-weight:500; text-decoration:none; }
 .journal {
   font-style: italic;
 }
+/* DOI ou HAL*/
+.href {
+  font-size: 13px;
+  color: #333;
+}
+
+href
 
 /* DOI lien discret */
 .meta a {
