@@ -255,3 +255,12 @@ a{ color:var(--primary); font-weight:500; text-decoration:none; }
     margin-bottom: 5px;
     line-height: 1.4;
 }
+.logos {
+    display: flex;
+    gap: 15px;
+}
+
+.logo {
+    height: 70px;
+    width: auto;
+}
