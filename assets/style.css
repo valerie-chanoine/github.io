@@ -260,7 +260,38 @@ a{ color:var(--primary); font-weight:500; text-decoration:none; }
     gap: 15px;
 }
 
+
 .logo {
-    height: 15px;
+    height: 70px;
     width: auto;
+}
+
+.contact-grid {
+    display: flex;
+    gap: 40px;
+    margin-top: 25px;
+    flex-wrap: wrap;
+}
+
+.bloc {
+    flex: 1;
+    min-width: 280px;
+}
+
+.bloc h3 {
+    color: #003366;
+    margin-bottom: 12px;
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.item img {
+    width: 22px;
+    height: 22px;
+    margin-right: 10px;
+    object-fit: contain;
 }
